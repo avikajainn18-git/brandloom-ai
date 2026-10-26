@@ -56,6 +56,17 @@ These instructions govern future coding sessions in this repository. Read this f
 7. Ask before destructive operations, external publication, deployment, payment, or changes outside the project directory.
 8. Never fabricate API calls, database writes, AI findings, approvals, or test results.
 
+## Git workflow
+
+- Use separate feature branches for independent workstreams and keep implementation commits local until they are reviewed and ready to push.
+- For every meaningful implementation task, run the relevant verification checks before committing.
+- Inspect `git diff` and `git status`, then stage only files relevant to the task. Do not include unrelated work or sensitive files.
+- Use focused Conventional Commit messages such as `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, and `chore:` that accurately describe the committed changes.
+- Never commit `.env.local`, credentials, tokens, `node_modules`, `.next`, build output, or other generated files that should remain untracked.
+- Do not create empty commits, fabricate historical work, amend published commits, rewrite history, force-push, or delete branches without explicit approval.
+- Do not automatically push commits or open pull requests.
+- At the end of each completed task, report the commit hash, commit message, checks performed, and remaining uncommitted changes.
+
 The A3.1 authentication and campaign checkpoint is complete. The next authorized implementation task is the remaining **A3: approved-reference management** work. Do not begin it unless explicitly requested.
 
 <!-- BEGIN:nextjs-agent-rules -->
