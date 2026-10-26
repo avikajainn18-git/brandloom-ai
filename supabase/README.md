@@ -1,6 +1,6 @@
 # Supabase foundation
 
-This directory contains the version-controlled PostgreSQL migrations for Brandloom AI. Phase A2 establishes the relational schema and protected baseline; Phase A3.1 adds authenticated campaign ownership policies; Phase A3.2 adds campaign-scoped brand-reference policies.
+This directory contains the version-controlled PostgreSQL migrations for Brandloom AI. Phase A2 establishes the relational schema and protected baseline; Phase A3.1 adds authenticated campaign ownership policies; Phase A3.2 adds campaign-scoped brand-reference policies; Phase A4 adds campaign-scoped asset policies.
 
 ## Local configuration
 
@@ -28,6 +28,8 @@ For Phase A3.1, review `migrations/20261026010000_campaign_ownership.sql` before
 
 For Phase A3.2, review `migrations/20261027000000_brand_reference_ownership.sql` before applying it. It adds authenticated-user-only select, insert, and update policies for `brand_references` when the related campaign is owned by the authenticated user.
 
+For Phase A4, review `migrations/20261027010000_asset_ownership.sql` before applying it. It adds authenticated-user-only select, insert, and update policies for `assets` when the related campaign is owned by the authenticated user. The existing `assets` table has no filename column; `.txt` filenames are used during import, while extracted text is persisted in `text_content`.
+
 ## Schema decisions
 
 - Statuses use PostgreSQL enums so application and database values remain predictable.
@@ -38,7 +40,7 @@ For Phase A3.2, review `migrations/20261027000000_brand_reference_ownership.sql`
 
 ## Access-control boundary
 
-RLS denies access through Supabase's anonymous and authenticated Data API roles unless a narrowly scoped policy grants it. Campaign operations use authenticated campaign ownership policies. Brand-reference operations additionally require the related campaign to belong to the authenticated user; the Phase A3.2 migration must be applied before hosted reference persistence can be accepted.
+RLS denies access through Supabase's anonymous and authenticated Data API roles unless a narrowly scoped policy grants it. Campaign operations use authenticated campaign ownership policies. Brand-reference and asset operations additionally require the related campaign to belong to the authenticated user; the relevant migrations must be applied before hosted persistence can be accepted.
 
 The service-role key is not part of the browser or current application configuration. If a future server-only administrative operation requires it, it must be isolated to server code and documented separately.
 
@@ -58,5 +60,5 @@ The application protects workspace routes with Next.js `proxy.ts`, verifies sess
 
 - `lib/supabase/client.ts` creates a typed browser client using the public publishable key.
 - `lib/supabase/server.ts` creates a typed server client with Next.js cookie handling and is marked server-only.
-- `lib/data-access/database.ts` exposes the typed server client and table helper types. Campaign and brand-reference CRUD remains in focused server-side data-access modules.
+- `lib/data-access/database.ts` exposes the typed server client and table helper types. Campaign, brand-reference, and asset CRUD remains in focused server-side data-access modules.
 - `lib/supabase/database.types.ts` is the checked-in schema contract for this migration. Regenerate or update it when migrations change.

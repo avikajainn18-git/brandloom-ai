@@ -59,7 +59,11 @@ Later items may refine earlier interfaces, but must not bypass their validation 
 
 **Scope:** Add campaign assets from pasted text and `.txt` attachments with title/filename and asset type, validate size/type/content, and persist retrievable assets and current revision information.
 
-**Acceptance criteria:** Valid text assets save and display after retrieval; invalid or oversized uploads fail predictably; content is treated as untrusted input; asset-to-campaign relationships and initial revisions are retained; no unsupported file-storage behavior is claimed.
+**Status:** Implemented in code; the hosted asset ownership migration remains pending explicit approval/application.
+
+**Scope completed:** Authenticated users can list, create, inspect, and edit text assets for campaigns they own. Pasted text and UTF-8 `.txt` imports are validated on the client and server, with a 1 MiB limit. The existing schema persists extracted text, title, type, and current revision metadata; it has no filename column, so no unsupported filename persistence is claimed. A separate RLS migration is prepared for hosted review.
+
+**Acceptance criteria:** Valid text assets save and display after retrieval; invalid or oversized uploads fail predictably; content is treated as untrusted input; asset-to-campaign relationships and current revisions are retained; unauthorized campaign access is rejected by application checks and the prepared RLS policies; no unsupported file-storage behavior is claimed.
 
 ## Phase B — Deterministic review
 
