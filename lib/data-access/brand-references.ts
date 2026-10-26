@@ -23,6 +23,18 @@ export class BrandReferenceNotFoundError extends Error {
   }
 }
 
+export class BrandReferencePersistenceError extends Error {
+  readonly code: string | null;
+  readonly operation: string;
+
+  constructor(operation: string, code: string | null = null) {
+    super("Brand reference persistence failed.");
+    this.name = "BrandReferencePersistenceError";
+    this.code = code;
+    this.operation = operation;
+  }
+}
+
 const brandReferenceColumns =
   "id, campaign_id, title, reference_type, content, approval_status, authority, precedence, created_at, updated_at";
 
@@ -119,7 +131,13 @@ export async function createOwnedBrandReference(
     .single();
 
   if (error || !data) {
-    throw new Error("Brand reference could not be created.");
+    if (error) {
+      console.error("[brand-references] create failed", {
+        code: error.code,
+        message: error.message,
+      });
+    }
+    throw new BrandReferencePersistenceError("create", error?.code ?? null);
   }
 
   return data;
@@ -149,6 +167,13 @@ export async function updateOwnedBrandReference(
     .maybeSingle();
 
   if (error || !data) {
+    if (error) {
+      console.error("[brand-references] update failed", {
+        code: error.code,
+        message: error.message,
+      });
+      throw new BrandReferencePersistenceError("update", error.code);
+    }
     throw new BrandReferenceNotFoundError();
   }
 
