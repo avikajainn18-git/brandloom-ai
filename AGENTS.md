@@ -58,16 +58,47 @@ These instructions govern future coding sessions in this repository. Read this f
 
 ## Git workflow
 
-- Use separate feature branches for independent workstreams and keep implementation commits local until they are reviewed and ready to push.
-- For every meaningful implementation task, run the relevant verification checks before committing.
-- Inspect `git diff` and `git status`, then stage only files relevant to the task. Do not include unrelated work or sensitive files.
-- Use focused Conventional Commit messages such as `feat:`, `fix:`, `test:`, `refactor:`, `docs:`, and `chore:` that accurately describe the committed changes.
-- Never commit `.env.local`, credentials, tokens, `node_modules`, `.next`, build output, or other generated files that should remain untracked.
-- Do not create empty commits, fabricate historical work, amend published commits, rewrite history, force-push, or delete branches without explicit approval.
-- Do not automatically push commits or open pull requests.
-- At the end of each completed task, report the commit hash, commit message, checks performed, and remaining uncommitted changes.
+### Source of truth and roles
 
-The A3.1 authentication and campaign checkpoint is complete. The next authorized implementation task is the remaining **A3: approved-reference management** work. Do not begin it unless explicitly requested.
+- The shared `main` branch is the single source of truth and the default working branch.
+- The primary developer is responsible for core implementation, integration, database integrity, security, and the review engine.
+- Do not create feature branches or pull requests for routine work. Use a temporary or backup branch only when needed for recovery or explicitly requested.
+- Only one person may actively modify, commit to, or push `main` at a time. Coordinate handoffs before making changes.
+- Never assume the local `main` is current. Fetch and inspect `origin/main` before synchronizing or publishing changes.
+
+### Primary developer workflow
+
+- Work directly on `main` for routine implementation.
+- Before starting, inspect `git status`, the current branch, and recent history. Preserve all unrelated uncommitted and untracked work.
+- Implement a focused change, run the relevant verification checks, inspect `git diff` and `git status`, and stage only files relevant to that change.
+- Commit completed, tested work directly to `main` using a focused Conventional Commit message.
+- Push validated commits to `origin/main` when ready to publish. Do not push unfinished work.
+- If a push is rejected, stop and inspect the remote history. Fetch and reconcile the changes safely; never force-push.
+
+### Teammate workflow
+
+- Pull the latest `main` before testing.
+- Test completed features and report reproducible bugs, steps, and expected versus actual behavior.
+- Isolated, non-core issues—such as straightforward presentation, copy, or local UI validation defects—may be fixed directly on `main` after coordinating with the primary developer. Run the relevant checks, make a focused commit, and push the tested fix so the primary developer can pull it.
+- Do not independently change authentication, authorization, campaign ownership, database integrity, Supabase Row-Level Security (RLS), database migrations, review-engine logic, or review persistence. Report these issues to the primary developer unless explicitly authorized to implement a fix.
+- Never have both developers modify or push `main` concurrently.
+
+### Safety, verification, and reporting
+
+- For every meaningful implementation task, run the relevant tests, lint, typecheck, build, and `git diff --check` where applicable.
+- Never stage or commit unrelated work, secrets, `.env.local`, credentials, tokens, `node_modules`, `.next`, or generated build output.
+- Preserve unexplained or unrelated working-tree artifacts. Do not delete, overwrite, stash, or restore them without authorization.
+- Do not create empty commits, fabricate historical work, amend published commits, rewrite published history, force-push, or delete branches without explicit approval.
+- Do not push automatically from an agent or open pull requests unless explicitly instructed.
+- At the end of each task, report the commit hash and message, checks performed and their results, push status, and any remaining uncommitted changes.
+- The primary developer must authorize hosted database migrations. Never claim a migration was applied without verifying it.
+
+## Current implementation status
+
+- Authentication, campaign ownership, approved brand-reference management, and text-asset submission have been implemented.
+- The deterministic review engine and review-persistence orchestration have been implemented in code.
+- Verify the deployment status of the review-persistence migration against hosted Supabase before relying on end-to-end review persistence.
+- Do not treat approved brand-reference management as a pending task. Select subsequent implementation work based on the latest explicit project instructions and verified repository state.
 
 <!-- BEGIN:nextjs-agent-rules -->
 
