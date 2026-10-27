@@ -21,6 +21,12 @@ const assetTypes = [
   ["other", "Other"],
 ] as const;
 
+type SelectedFile = {
+  file: File;
+  name: string;
+  size: number;
+};
+
 function byteLength(value: string) {
   return new TextEncoder().encode(value).byteLength;
 }
@@ -36,7 +42,7 @@ export function AssetForm({
 }) {
   const [state, formAction, isPending] = useActionState(action, {});
   const [content, setContent] = useState(asset?.text_content ?? "");
-  const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [isReadingFile, setIsReadingFile] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [showServerError, setShowServerError] = useState(true);
@@ -58,7 +64,7 @@ export function AssetForm({
     const contentVersionAtStart = contentVersionRef.current;
     setLocalError(null);
     setShowServerError(false);
-    setSelectedFile({ name: file.name, size: file.size });
+    setSelectedFile({ file, name: file.name, size: file.size });
     setIsReadingFile(true);
 
     try {
@@ -75,7 +81,7 @@ export function AssetForm({
           setContent(result.content);
           contentVersionRef.current += 1;
         }
-        setSelectedFile({ name: result.filename, size: result.size });
+        setSelectedFile({ file, name: result.filename, size: result.size });
       }
     } finally {
       if (requestId === readRequestRef.current) setIsReadingFile(false);
@@ -107,7 +113,17 @@ export function AssetForm({
     if (byteLength(content) > MAX_ASSET_BYTES) {
       event.preventDefault();
       setLocalError("Asset content must be 1 MiB or smaller.");
+      return;
     }
+
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    if (selectedFile) {
+      formData.set("assetFile", selectedFile.file);
+    } else {
+      formData.delete("assetFile");
+    }
+    formAction(formData);
   }
 
   return (
