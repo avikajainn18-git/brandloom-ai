@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRef, useState } from "react";
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import type { AssetActionState } from "@/app/(workspace)/asset-actions";
 import { MAX_ASSET_BYTES } from "@/lib/assets/constants";
 import { formatFileSize, readTextFile } from "@/lib/assets/file-input";
@@ -123,7 +123,9 @@ export function AssetForm({
     } else {
       formData.delete("assetFile");
     }
-    formAction(formData);
+    startTransition(() => {
+  formAction(formData);
+});
   }
 
   return (
