@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { useActionState } from "react";
 import type { AssetActionState } from "@/app/(workspace)/asset-actions";
 import { MAX_ASSET_BYTES } from "@/lib/assets/constants";
+import { formatFileSize, readTextFile } from "@/lib/assets/file-input";
 import type { AssetRow } from "@/lib/data-access/assets";
 
 type AssetAction = (
@@ -35,48 +36,68 @@ export function AssetForm({
 }) {
   const [state, formAction, isPending] = useActionState(action, {});
   const [content, setContent] = useState(asset?.text_content ?? "");
-  const [sourceFilename, setSourceFilename] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ name: string; size: number } | null>(null);
+  const [isReadingFile, setIsReadingFile] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [showServerError, setShowServerError] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const readRequestRef = useRef(0);
+  const contentVersionRef = useRef(0);
   const isEditing = Boolean(asset);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
       setLocalError(null);
-      setSourceFilename(null);
+      setShowServerError(false);
       return;
     }
 
+    const requestId = ++readRequestRef.current;
+    const contentVersionAtStart = contentVersionRef.current;
     setLocalError(null);
-    if (!file.name.toLowerCase().endsWith(".txt")) {
-      setLocalError("Attach a .txt file only.");
-      event.target.value = "";
-      return;
-    }
-    if (file.size > MAX_ASSET_BYTES) {
-      setLocalError("Text files must be 1 MiB or smaller.");
-      event.target.value = "";
-      return;
-    }
+    setShowServerError(false);
+    setSelectedFile({ name: file.name, size: file.size });
+    setIsReadingFile(true);
 
     try {
-      const text = await file.text();
-      if (!text.trim()) {
-        setLocalError("The attached text file is empty.");
+      const result = await readTextFile(file);
+      if (requestId !== readRequestRef.current) return;
+      if (result.kind === "error") {
+        setLocalError(result.error);
+        setSelectedFile(null);
         event.target.value = "";
         return;
       }
-      setContent(text);
-      setSourceFilename(file.name);
-    } catch {
-      setLocalError("The attached file could not be read as text.");
-      event.target.value = "";
+      if (result.kind === "success") {
+        if (contentVersionRef.current === contentVersionAtStart) {
+          setContent(result.content);
+          contentVersionRef.current += 1;
+        }
+        setSelectedFile({ name: result.filename, size: result.size });
+      }
+    } finally {
+      if (requestId === readRequestRef.current) setIsReadingFile(false);
     }
+  }
+
+  function clearSelectedFile() {
+    readRequestRef.current += 1;
+    setIsReadingFile(false);
+    setSelectedFile(null);
+    setLocalError(null);
+    setShowServerError(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     setLocalError(null);
+    setShowServerError(true);
+    if (isReadingFile) {
+      event.preventDefault();
+      setLocalError("Wait for the selected text file to finish loading.");
+      return;
+    }
     if (!content.trim()) {
       event.preventDefault();
       setLocalError("Enter asset content or attach a non-empty .txt file.");
@@ -147,10 +168,24 @@ export function AssetForm({
         <p className="mt-2 text-xs leading-5 text-[var(--muted)]">
           UTF-8 `.txt` files up to 1 MiB are supported. Imported text appears below so you can inspect or edit it before saving.
         </p>
-        {sourceFilename ? (
-          <p className="mt-2 text-xs font-medium text-[#456044]" role="status">
-            Imported {sourceFilename}. The existing schema stores the extracted text, not the filename.
+        {isReadingFile ? (
+          <p className="mt-2 text-xs font-medium text-[#62625e]" role="status" aria-live="polite">
+            Reading selected text file…
           </p>
+        ) : null}
+        {selectedFile && !isReadingFile ? (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs" role="status">
+            <p className="font-medium text-[#456044]">
+              Selected {selectedFile.name} ({formatFileSize(selectedFile.size)})
+            </p>
+            <button
+              type="button"
+              onClick={clearSelectedFile}
+              className="font-medium text-[#62625e] underline underline-offset-4 hover:text-[#252525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#252525]"
+            >
+              Clear selection
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -165,7 +200,12 @@ export function AssetForm({
           maxLength={MAX_ASSET_BYTES}
           rows={14}
           value={content}
-          onChange={(event) => setContent(event.target.value)}
+          onChange={(event) => {
+            contentVersionRef.current += 1;
+            setContent(event.target.value);
+            setLocalError(null);
+            setShowServerError(false);
+          }}
           className="mt-2 block w-full resize-y rounded-lg border bg-[#fcfcfb] px-3.5 py-3 text-sm leading-6 text-[#252525] outline-none transition-colors placeholder:text-[#a3a39d] focus:border-[#252525] focus:ring-2 focus:ring-[#252525]/10"
           placeholder="Paste the campaign content here, or import a .txt file above."
         />
@@ -174,9 +214,9 @@ export function AssetForm({
         </p>
       </div>
 
-      {localError || state.error ? (
+      {localError || (showServerError ? state.error : undefined) ? (
         <p role="alert" className="rounded-lg border border-[#e4caca] bg-[#fff8f8] px-3 py-2.5 text-sm text-[#8d3f3f]">
-          {localError || state.error}
+          {localError || (showServerError ? state.error : undefined)}
         </p>
       ) : null}
 
@@ -189,7 +229,7 @@ export function AssetForm({
         </Link>
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || isReadingFile}
           className="inline-flex items-center justify-center rounded-lg bg-[#252525] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#41413e] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#252525]"
         >
           {isPending ? "Saving…" : isEditing ? "Save changes" : "Save asset"}

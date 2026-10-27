@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --experimental-strip-types --test lib/domain/__tests__/review-engine.test.ts lib/domain/__tests__/review-persistence.test.ts",
+    "test": "node --experimental-strip-types --test lib/domain/__tests__/review-engine.test.ts lib/domain/__tests__/review-persistence.test.ts lib/assets/__tests__/validation.test.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
