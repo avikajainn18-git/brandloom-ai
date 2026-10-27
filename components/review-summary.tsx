@@ -43,7 +43,18 @@ const statusConfig: Record<
 
 function formatTimestamp(value: string | null): string {
   if (!value) return "—";
-  return new Date(value).toLocaleString();
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown time";
+  }
+
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "medium",
+    timeZone: "Asia/Kolkata",
+  }).format(date);
 }
 
 export function ReviewSummary({
