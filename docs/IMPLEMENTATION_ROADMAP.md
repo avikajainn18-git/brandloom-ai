@@ -49,21 +49,21 @@ Later items may refine earlier interfaces, but must not bypass their validation 
 
 #### A3.2. Campaign-scoped brand-reference management
 
-**Status:** Implemented in code; the hosted brand-reference ownership migration remains pending explicit approval/application.
+**Status:** Implemented and verified against the current hosted project.
 
-**Scope completed:** Authenticated users can list, create, inspect, and edit references for campaigns they own. Server-side validation, campaign ownership checks, campaign-scoped routes, and explicit reference type, approval status, authority, and precedence fields are implemented. A separate RLS migration is prepared for hosted review.
+**Scope completed:** Authenticated users can list, create, inspect, and edit references for campaigns they own. Server-side validation, campaign ownership checks, campaign-scoped routes, explicit reference type, approval status, authority, and precedence fields, and the campaign-scoped RLS policies are implemented.
 
-**Acceptance criteria:** Reference operations use the authenticated server user, reference records are constrained to owned campaigns in the application and RLS policy design, invalid input is rejected at the action boundary, and reference retrieval/edit routes do not accept cross-campaign access through manipulated identifiers. Hosted persistence verification remains blocked until the prepared migration is approved and applied.
+**Acceptance criteria:** Reference operations use the authenticated server user, reference records are constrained to owned campaigns in the application and RLS policies, invalid input is rejected at the action boundary, and reference retrieval/edit routes do not accept cross-campaign access through manipulated identifiers.
 
 ### A4. Text asset submission, `.txt` parsing, and persistence
 
 **Scope:** Add campaign assets from pasted text and `.txt` attachments with title/filename and asset type, validate size/type/content, and persist retrievable assets and current revision information.
 
-**Status:** Implemented in code; the hosted asset ownership migration remains pending explicit approval/application.
+**Status:** Implemented and verified against the current hosted project.
 
-**Scope completed:** Authenticated users can list, create, inspect, and edit text assets for campaigns they own. Pasted text and UTF-8 `.txt` imports are validated on the client and server, with a 1 MiB limit. The existing schema persists extracted text, title, type, and current revision metadata; it has no filename column, so no unsupported filename persistence is claimed. A separate RLS migration is prepared for hosted review.
+**Scope completed:** Authenticated users can list, create, inspect, and edit text assets for campaigns they own. Pasted text and UTF-8 `.txt` imports are validated on the client and server, with a 1 MiB limit. The existing schema persists extracted text, title, type, and current revision metadata; it has no filename column, so no unsupported filename persistence is claimed.
 
-**Acceptance criteria:** Valid text assets save and display after retrieval; invalid or oversized uploads fail predictably; content is treated as untrusted input; asset-to-campaign relationships and current revisions are retained; unauthorized campaign access is rejected by application checks and the prepared RLS policies; no unsupported file-storage behavior is claimed.
+**Acceptance criteria:** Valid text assets save and display after retrieval; invalid or oversized uploads fail predictably; content is treated as untrusted input; asset-to-campaign relationships and current revisions are retained; unauthorized campaign access is rejected by application checks and hosted RLS policies; no unsupported file-storage behavior is claimed.
 
 ## Phase B — Deterministic review
 
@@ -83,7 +83,13 @@ Define typed review runs, findings, evidence references, suggested corrections, 
 
 Implement rules for objectively verifiable facts and terminology, including normalized comparison and clear source precedence behavior.
 
-**Acceptance criteria:** Rules run without React or an LLM; findings identify affected assets and genuine references; clear violations produce targeted corrections only when the correct value is supported; edge cases and invalid inputs are tested.
+**Status:** Implemented as a server-only orchestration service; the hosted review ownership migration remains pending explicit approval/application.
+
+**Scope completed:** The service verifies the authenticated user owns the campaign, loads campaign-scoped assets and approved references, maps them to the B1 domain contract, runs the deterministic engine, and persists review runs, findings, and evidence relationships. It preserves conflict-required-review states and serialized correction/evidence details. Failed writes mark an already-created run as failed when possible and never return a completed summary.
+
+**Current limitation:** B2 does not create human-review tickets, expose review results in the UI, apply corrections, or add additional deterministic rule families. The prepared RLS migration must be applied before hosted review persistence can succeed.
+
+**Acceptance criteria:** Rules run without React or an LLM; findings identify affected assets and genuine references; clear violations produce targeted corrections only when the correct value is supported; edge cases, ownership boundaries, persistence mapping, and failure handling are tested.
 
 ### B3. Cross-asset fact comparison
 
