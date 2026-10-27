@@ -52,13 +52,14 @@ export function AssetForm({
   const isEditing = Boolean(asset);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
-    if (!file) {
-      setLocalError(null);
-      setShowServerError(false);
-      return;
-    }
+  const input = event.currentTarget;
+  const file = input.files?.[0];
+
+  if (!file) {
+    setLocalError(null);
+    setShowServerError(false);
+    return;
+  }
 
     const requestId = ++readRequestRef.current;
     const contentVersionAtStart = contentVersionRef.current;
@@ -117,16 +118,19 @@ export function AssetForm({
     }
 
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    if (selectedFile) {
-      formData.set("assetFile", selectedFile.file);
-    } else {
-      formData.delete("assetFile");
-    }
-    startTransition(() => {
+
+const formData = new FormData(event.currentTarget);
+
+if (selectedFile) {
+  formData.set("assetFile", selectedFile.file);
+} else {
+  formData.delete("assetFile");
+}
+
+startTransition(() => {
   formAction(formData);
 });
-  }
+}
 
   return (
     <form
