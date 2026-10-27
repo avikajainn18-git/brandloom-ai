@@ -42,7 +42,11 @@ export function AssetForm({
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      setLocalError(null);
+      setSourceFilename(null);
+      return;
+    }
 
     setLocalError(null);
     if (!file.name.toLowerCase().endsWith(".txt")) {
