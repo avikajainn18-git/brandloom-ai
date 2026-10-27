@@ -41,11 +41,19 @@ Later items may refine earlier interfaces, but must not bypass their validation 
 
 #### A3.1. Authentication and campaign ownership checkpoint
 
-**Status:** Implemented in code; hosted ownership migration remains pending explicit approval/application.
+**Status:** Implemented and verified in code; the hosted ownership migration is applied and migration history is synchronized.
 
 **Scope completed:** Supabase email/password sign-in, sign-up, sign-out, callback exchange, SSR session refresh through Next.js `proxy.ts`, protected workspace redirects, server-side user verification, campaign create/list/detail/update flows, input validation, and a separate ownership/RLS migration.
 
-**Acceptance criteria:** Campaign operations use the authenticated server user, `campaigns.owner_id` is protected by authenticated-user policies, unauthenticated workspace access redirects to sign-in, and campaign records are not fabricated or accepted from browser-supplied owner IDs. The hosted migration must still be applied and verified before remote persistence can be accepted.
+**Acceptance criteria:** Campaign operations use the authenticated server user, `campaigns.owner_id` is protected by authenticated-user policies, unauthenticated workspace access redirects to sign-in, and campaign records are not fabricated or accepted from browser-supplied owner IDs. Hosted migration history is synchronized and the campaign ownership policies are present.
+
+#### A3.2. Campaign-scoped brand-reference management
+
+**Status:** Implemented in code; the hosted brand-reference ownership migration remains pending explicit approval/application.
+
+**Scope completed:** Authenticated users can list, create, inspect, and edit references for campaigns they own. Server-side validation, campaign ownership checks, campaign-scoped routes, and explicit reference type, approval status, authority, and precedence fields are implemented. A separate RLS migration is prepared for hosted review.
+
+**Acceptance criteria:** Reference operations use the authenticated server user, reference records are constrained to owned campaigns in the application and RLS policy design, invalid input is rejected at the action boundary, and reference retrieval/edit routes do not accept cross-campaign access through manipulated identifiers. Hosted persistence verification remains blocked until the prepared migration is approved and applied.
 
 ### A4. Text asset submission, `.txt` parsing, and persistence
 
