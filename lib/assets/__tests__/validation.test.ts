@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { MAX_ASSET_BYTES } from "../constants.ts";
-import { formatFileSize, readTextFile } from "../file-input.ts";
+import { formatFileSize, isFileEntry, readTextFile } from "../file-input.ts";
 import { readAssetInput } from "../validation.ts";
 
 function formData({
@@ -27,6 +27,17 @@ test("valid manual text is accepted without a file", async () => {
   });
 });
 
+test("an empty multipart file placeholder is treated as no file", async () => {
+  const data = formData();
+  data.set("assetFile", new File([], ""));
+
+  assert.deepEqual(await readAssetInput(data), {
+    title: "Campaign asset",
+    assetType: "email",
+    textContent: "Manual campaign text",
+  });
+});
+
 test("missing file with empty text reports required content, not an empty-file error", async () => {
   const result = await readAssetInput(formData({ content: "   " }));
   assert.deepEqual(result, {
@@ -46,6 +57,16 @@ test("valid text files expose filename, size, and extracted content", async () =
     filename: "campaign.txt",
     size: file.size,
   });
+});
+
+test("file detection accepts a file-like multipart value across realms", () => {
+  const fileLike = {
+    name: "cross-realm.txt",
+    size: 7,
+    arrayBuffer: async () => new ArrayBuffer(7),
+  } as unknown as FormDataEntryValue;
+
+  assert.equal(isFileEntry(fileLike), true);
 });
 
 test("a valid file can provide content when the editor field is absent", async () => {

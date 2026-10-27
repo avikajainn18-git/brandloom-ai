@@ -6,7 +6,14 @@ export type TextFileReadResult =
   | { kind: "error"; error: string };
 
 export function isFileEntry(value: FormDataEntryValue | null): value is File {
-  return typeof File !== "undefined" && value instanceof File;
+  if (typeof value !== "object" || value === null) return false;
+
+  const candidate = value as Partial<File>;
+  return (
+    typeof candidate.name === "string" &&
+    typeof candidate.size === "number" &&
+    typeof candidate.arrayBuffer === "function"
+  );
 }
 
 export async function readTextFile(file: File): Promise<TextFileReadResult> {

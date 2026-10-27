@@ -46,7 +46,8 @@ export function AssetForm({
   const isEditing = Boolean(asset);
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) {
       setLocalError(null);
       setShowServerError(false);
@@ -66,7 +67,7 @@ export function AssetForm({
       if (result.kind === "error") {
         setLocalError(result.error);
         setSelectedFile(null);
-        event.target.value = "";
+        input.value = "";
         return;
       }
       if (result.kind === "success") {
@@ -173,10 +174,11 @@ export function AssetForm({
             Reading selected text file…
           </p>
         ) : null}
-        {selectedFile && !isReadingFile ? (
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs" role="status">
+        {selectedFile ? (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs" role="status" aria-busy={isReadingFile}>
             <p className="font-medium text-[#456044]">
               Selected {selectedFile.name} ({formatFileSize(selectedFile.size)})
+              {isReadingFile ? " · Reading…" : ""}
             </p>
             <button
               type="button"
