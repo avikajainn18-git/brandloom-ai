@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
   BrandReferenceNotFoundError,
+  BrandReferencePersistenceError,
   createOwnedBrandReference,
   updateOwnedBrandReference,
   type BrandReferenceInput,
@@ -101,7 +102,13 @@ export async function createReferenceAction(
   let reference;
   try {
     reference = await createOwnedBrandReference(campaignId, input);
-  } catch {
+  } catch (error) {
+    if (error instanceof BrandReferencePersistenceError && error.code === "42501") {
+      return {
+        error:
+          "Reference storage is not enabled in the connected Supabase project yet. Apply the pending brand-reference ownership migration, then try again.",
+      };
+    }
     return { error: "Reference could not be created. Please try again." };
   }
 
@@ -129,6 +136,12 @@ export async function updateReferenceAction(
   } catch (error) {
     if (error instanceof BrandReferenceNotFoundError) {
       return { error: "Reference not found or you do not have access to it." };
+    }
+    if (error instanceof BrandReferencePersistenceError && error.code === "42501") {
+      return {
+        error:
+          "Reference storage is not enabled in the connected Supabase project yet. Apply the pending brand-reference ownership migration, then try again.",
+      };
     }
     return { error: "Reference could not be updated. Please try again." };
   }

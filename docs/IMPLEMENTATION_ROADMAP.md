@@ -59,7 +59,11 @@ Later items may refine earlier interfaces, but must not bypass their validation 
 
 **Scope:** Add campaign assets from pasted text and `.txt` attachments with title/filename and asset type, validate size/type/content, and persist retrievable assets and current revision information.
 
-**Acceptance criteria:** Valid text assets save and display after retrieval; invalid or oversized uploads fail predictably; content is treated as untrusted input; asset-to-campaign relationships and initial revisions are retained; no unsupported file-storage behavior is claimed.
+**Status:** Implemented in code; the hosted asset ownership migration remains pending explicit approval/application.
+
+**Scope completed:** Authenticated users can list, create, inspect, and edit text assets for campaigns they own. Pasted text and UTF-8 `.txt` imports are validated on the client and server, with a 1 MiB limit. The existing schema persists extracted text, title, type, and current revision metadata; it has no filename column, so no unsupported filename persistence is claimed. A separate RLS migration is prepared for hosted review.
+
+**Acceptance criteria:** Valid text assets save and display after retrieval; invalid or oversized uploads fail predictably; content is treated as untrusted input; asset-to-campaign relationships and current revisions are retained; unauthorized campaign access is rejected by application checks and the prepared RLS policies; no unsupported file-storage behavior is claimed.
 
 ## Phase B — Deterministic review
 
@@ -67,7 +71,13 @@ Later items may refine earlier interfaces, but must not bypass their validation 
 
 Define typed review runs, findings, evidence references, suggested corrections, severity, and statuses. Include distinctions for verified mismatch, uncertain result, and conflict requiring review.
 
-**Acceptance criteria:** Types and persistence/API contracts are explicit, reference identifiers resolve to stored records, and status transitions reject invalid changes.
+**Status:** Implemented as a pure, deterministic domain core; persistence and UI integration remain later checkpoints.
+
+**Scope completed:** Added framework-independent review input/result contracts, persistence-shaped review-run/finding/evidence records, explicit finding/evidence/conflict states, guarded status transitions, and a discount-percentage rule with approved-source precedence handling. Unit tests run locally without Supabase credentials or network access.
+
+**Current limitation:** B1 evaluates explicit discount expressions only. It does not persist review runs/findings, create tickets, modify assets, or expose review results in campaign pages.
+
+**Acceptance criteria:** Types and persistence/API contracts are explicit, reference identifiers resolve to supplied approved-reference inputs, status transitions reject invalid changes, and deterministic findings distinguish verified mismatches, uncertainty, and unresolved source conflicts.
 
 ### B2. Deterministic rule checking
 
