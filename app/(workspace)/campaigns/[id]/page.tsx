@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { ArrowLeft, FileText, Pencil, Plus, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileText, Pencil, Plus, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CampaignForm } from "@/components/campaign-form";
 import { BrandReferenceList } from "@/components/brand-reference-list";
+import { ReviewSummary } from "@/components/review-summary";
+import { ReviewFindingsList } from "@/components/review-findings-list";
 import { PageHeader } from "@/components/page-header";
 import { updateCampaignAction } from "@/app/(workspace)/campaign-actions";
+import { runReviewAction } from "@/app/(workspace)/review-actions";
 import {
   CampaignNotFoundError,
   getOwnedCampaign,
@@ -15,6 +18,14 @@ import {
   type BrandReferenceRow,
 } from "@/lib/data-access/brand-references";
 import { listOwnedAssets, type AssetRow } from "@/lib/data-access/assets";
+import {
+  getLatestReviewRun,
+  listReviewFindings,
+  listFindingReferences,
+  type ReviewRunRow,
+  type FindingWithAsset,
+  type FindingReferenceWithTitle,
+} from "@/lib/data-access/reviews";
 import { AssetList } from "@/components/asset-list";
 
 export const metadata: Metadata = {
@@ -34,6 +45,10 @@ export default async function CampaignDetailsPage({
   let referencesError = false;
   let assets: AssetRow[] = [];
   let assetsError = false;
+  let reviewRun: ReviewRunRow | null = null;
+  let reviewError = false;
+  let findings: FindingWithAsset[] = [];
+  let findingReferences: FindingReferenceWithTitle[] = [];
 
   try {
     campaign = await getOwnedCampaign(id);
@@ -53,6 +68,25 @@ export default async function CampaignDetailsPage({
   } catch {
     assetsError = true;
   }
+
+  try {
+    reviewRun = await getLatestReviewRun(campaign.id);
+    if (reviewRun && reviewRun.status === "completed" && reviewRun.finding_count > 0) {
+      findings = await listReviewFindings(campaign.id, reviewRun.id);
+      if (findings.length > 0) {
+        findingReferences = await listFindingReferences(
+          campaign.id,
+          findings.map((f) => f.id),
+        );
+      }
+    }
+  } catch {
+    reviewError = true;
+  }
+
+  const hasApprovedReferences = references.some(
+    (ref) => ref.approval_status === "approved",
+  );
 
   return (
     <div className="space-y-8">
@@ -151,7 +185,7 @@ export default async function CampaignDetailsPage({
               Content assets
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
-              Store the text assets that belong to this campaign. Review and AI analysis are separate later phases.
+              Store the text assets that belong to this campaign.
             </p>
           </div>
           <Link
@@ -175,11 +209,51 @@ export default async function CampaignDetailsPage({
             <FileText size={22} className="text-[#62625e]" strokeWidth={1.7} />
             <h3 className="mt-4 text-lg font-semibold tracking-[-0.02em] text-[#252525]">No content assets yet</h3>
             <p className="mt-2 max-w-md text-sm leading-6 text-[var(--muted)]">
-              Add pasted campaign text or import a `.txt` file to begin building this campaign’s content set.
+              Add pasted campaign text or import a `.txt` file to begin building this campaign&apos;s content set.
             </p>
           </div>
         ) : (
           <AssetList campaignId={campaign.id} assets={assets} />
+        )}
+      </section>
+
+      <section className="space-y-5" aria-labelledby="campaign-review-heading">
+        <div className="border-b pb-5">
+          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.12em] text-[#8b8b85]">
+            <ClipboardCheck size={15} />
+            Campaign review
+          </div>
+          <h2 id="campaign-review-heading" className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-[#252525]">
+            Deterministic review
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--muted)]">
+            Check campaign assets against approved references for objectively verifiable inconsistencies.
+          </p>
+        </div>
+
+        {reviewError ? (
+          <div className="rounded-xl border border-[#e4caca] bg-[#fff8f8] p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#8d3f3f]">Review data unavailable</p>
+            <p className="mt-2 text-sm leading-6 text-[#6e4b4b]">
+              Review data could not be loaded. Confirm the review ownership migration is applied, then try again.
+            </p>
+          </div>
+        ) : (
+          <>
+            <ReviewSummary
+              campaignId={campaign.id}
+              reviewRun={reviewRun}
+              action={runReviewAction}
+              hasAssets={assets.length > 0}
+              hasReferences={hasApprovedReferences}
+            />
+            {findings.length > 0 ? (
+              <ReviewFindingsList
+                findings={findings}
+                references={findingReferences}
+              />
+            ) : null}
+          </>
         )}
       </section>
     </div>
