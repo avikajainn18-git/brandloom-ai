@@ -59,7 +59,13 @@ Later items may refine earlier interfaces, but must not bypass their validation 
 
 Define typed review runs, findings, evidence references, suggested corrections, severity, and statuses. Include distinctions for verified mismatch, uncertain result, and conflict requiring review.
 
-**Acceptance criteria:** Types and persistence/API contracts are explicit, reference identifiers resolve to stored records, and status transitions reject invalid changes.
+**Status:** Implemented as a pure, deterministic domain core; persistence and UI integration remain later checkpoints.
+
+**Scope completed:** Added framework-independent review input/result contracts, persistence-shaped review-run/finding/evidence records, explicit finding/evidence/conflict states, guarded status transitions, and a discount-percentage rule with approved-source precedence handling. Unit tests run locally without Supabase credentials or network access.
+
+**Current limitation:** B1 evaluates explicit discount expressions only. It does not persist review runs/findings, create tickets, modify assets, or expose review results in campaign pages.
+
+**Acceptance criteria:** Types and persistence/API contracts are explicit, reference identifiers resolve to supplied approved-reference inputs, status transitions reject invalid changes, and deterministic findings distinguish verified mismatches, uncertainty, and unresolved source conflicts.
 
 ### B2. Deterministic rule checking
 

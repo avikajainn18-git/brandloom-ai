@@ -103,4 +103,4 @@ Both scenarios must be genuine application behavior, not hardcoded success messa
 
 ## Current implementation status
 
-Phases A1, A2, and the A3.1 authentication/campaign checkpoint are implemented in code: the repository has a Next.js App Router foundation, protected Supabase SSR sessions, sign-in/sign-up/sign-out flows, server-validated campaign management, typed Supabase client utilities, version-controlled PostgreSQL migrations, and campaign ownership policies. The new ownership migration remains pending hosted approval/application; brand-reference management, file uploads, deterministic review, human-review processing, and LLM integration remain planned for later roadmap phases.
+The B1 deterministic review-engine core is implemented as a framework-independent domain module. It currently checks explicit discount-percentage expressions against supplied approved references, applies only explicit numeric precedence, reports unresolved conflicts or ambiguity without unsupported corrections, and does not yet persist or display review results; later deterministic checks, human-review processing, and LLM integration remain planned for later roadmap phases.
